@@ -28,16 +28,20 @@ const optionsDefault = {
   sanitizeUserForClient
 };
 
-module.exports = function (options1 = {}) {
+module.exports = function (options1 = {}, afterware = false) {
   debug('service being configured.');
   const options = Object.assign({}, optionsDefault, options1);
 
+  if (typeof afterware !== 'function') {
+    afterware = () => (req, res, next) => next();
+  }
+
   return function () {
-    return authManagement(options, this);
+    return authManagement(options, this, afterware);
   };
 };
 
-function authManagement (options, app) { // 'function' needed as we use 'this'
+function authManagement (options, app, afterware) { // 'function' needed as we use 'this'
   debug('service initialized');
   options.app = app;
 
@@ -74,5 +78,5 @@ function authManagement (options, app) { // 'function' needed as we use 'this'
             { errors: { $className: 'badParams' } }));
       }
     }
-  });
+  }, afterware());
 }
